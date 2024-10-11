@@ -1,0 +1,15 @@
+{
+    "rateLimit": {
+        "requestsPerSecond": 1,
+        "burst": 5
+    },
+    "daemon": {
+        "pidFile": "./config/pid",
+        "logFile": "./config/log"
+    },
+    "port": 8080,
+    "userFile": "./config/users.json",
+    "storage": "./data",
+    "certFolder": "./config/certs",
+    "baseURL": "localhost"
+}

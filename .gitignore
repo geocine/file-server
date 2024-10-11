@@ -1,0 +1,9 @@
+go.sum
+users.json
+files
+fileserver.pid
+fileserver.log
+go-simple-fileserver
+certs/*
+config/*
+data/*
