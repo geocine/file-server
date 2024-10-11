@@ -58,6 +58,7 @@ type Config struct {
 	CertFolder   string `json:"certFolder"`
 	BaseURL      string `json:"baseURL"`
 	ReverseProxy bool   `json:"reverseProxy"`
+	UseHTTPS     bool   `json:"useHTTPS"`
 }
 
 var (
@@ -173,6 +174,7 @@ func createDefaultConfig() {
 		CertFolder:   "./config/certs",
 		BaseURL:      "localhost",
 		ReverseProxy: false,
+		UseHTTPS:     false,
 	}
 
 	// Marshal the default configuration to JSON
@@ -705,35 +707,44 @@ func startServer() {
 	http.HandleFunc("/", errorMiddleware(rateLimitMiddleware(authMiddleware(handleRoot))))
 	http.HandleFunc("/files", errorMiddleware(rateLimitMiddleware(authMiddleware(handleFileList))))
 
-	// Load SSL certificate and key
-	certFile := filepath.Join(config.CertFolder, "server.crt")
-	keyFile := filepath.Join(config.CertFolder, "server.key")
+	if config.UseHTTPS {
+		// Load SSL certificate and key
+		certFile := filepath.Join(config.CertFolder, "server.crt")
+		keyFile := filepath.Join(config.CertFolder, "server.key")
 
-	_, errCert := os.Stat(certFile)
-	_, errKey := os.Stat(keyFile)
+		_, errCert := os.Stat(certFile)
+		_, errKey := os.Stat(keyFile)
 
-	if os.IsNotExist(errCert) || os.IsNotExist(errKey) {
-		log.Println("SSL certificate or key not found, generating self-signed certificates...")
-		err := os.MkdirAll(config.CertFolder, os.ModePerm)
-		if err != nil {
-			log.Fatalf("Error creating files folder: %s\n", err)
+		if os.IsNotExist(errCert) || os.IsNotExist(errKey) {
+			log.Println("SSL certificate or key not found, generating self-signed certificates...")
+			err := os.MkdirAll(config.CertFolder, os.ModePerm)
+			if err != nil {
+				log.Fatalf("Error creating files folder: %s\n", err)
+			}
+			err = generateSelfSignedCert(certFile, keyFile)
+			if err != nil {
+				log.Fatalf("Error generating self-signed certificates: %s\n", err)
+			}
 		}
-		err = generateSelfSignedCert(certFile, keyFile)
-		if err != nil {
-			log.Fatalf("Error generating self-signed certificates: %s\n", err)
+
+		// Create HTTPS server
+		server := &http.Server{
+			Addr: serverAddr,
 		}
-	}
 
-	// Create HTTPS server
-	server := &http.Server{
-		Addr: serverAddr,
-	}
-
-	// Start the HTTPS server
-	log.Printf("Server is running on https://%s\n", serverAddr)
-	err = server.ListenAndServeTLS(certFile, keyFile)
-	if err != nil {
-		log.Fatalf("Error starting HTTPS server: %s\n", err)
+		// Start the HTTPS server
+		log.Printf("Server is running on https://%s\n", serverAddr)
+		err := server.ListenAndServeTLS(certFile, keyFile)
+		if err != nil {
+			log.Fatalf("Error starting HTTPS server: %s\n", err)
+		}
+	} else {
+		// Start the HTTP server
+		log.Printf("Server is running on http://%s\n", serverAddr)
+		err := http.ListenAndServe(serverAddr, nil)
+		if err != nil {
+			log.Fatalf("Error starting HTTP server: %s\n", err)
+		}
 	}
 }
 
