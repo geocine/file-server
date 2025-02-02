@@ -1,4 +1,4 @@
-module github.com/mietzen/go-simple-fileserver
+module github.com/geocine/file-server
 
 go 1.16
 
