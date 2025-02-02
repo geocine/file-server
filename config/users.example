@@ -1,0 +1,6 @@
+[
+  {
+    "username": "admin",
+    "password": "$argon2id$v=19$m=65536,t=1,p=4$2978bbb47ccd581692bc73e1c3126877$4b1c5fab38e90b55c3086b0b919b6e59d100f5ee967f736a664b1e7056713deb"
+  }
+]

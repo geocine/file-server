@@ -234,11 +234,16 @@ func TestHandleFileList(t *testing.T) {
 }
 
 func TestHandleDelete(t *testing.T) {
+	// Ensure the storage directory is correct
+	config.Storage = "files"
+
 	// Create a temporary file for testing
 	tempFile, err := os.CreateTemp("files", "test-file-")
 	if err != nil {
 		t.Fatalf("Failed to create temporary file: %s", err)
 	}
+	// Close the temporary file to allow deletion
+	tempFile.Close()
 	defer os.Remove(tempFile.Name())
 
 	// Create a new HTTP request

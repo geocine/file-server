@@ -236,6 +236,12 @@ func errorMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func handleRoot(w http.ResponseWriter, r *http.Request) {
+	// If the URL path is just "/", redirect to the file list
+	if r.URL.Path == "/" {
+		http.Redirect(w, r, "/files", http.StatusFound)
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		handleDownload(w, r)
@@ -450,7 +456,8 @@ func handleFileList(w http.ResponseWriter, r *http.Request) {
 
 	baseFolder := filepath.Base(config.Storage)
 
-	var fileInfos []FileInfo
+	// Initialize fileInfos as an empty slice instead of a nil slice.
+	fileInfos := make([]FileInfo, 0)
 	err := filepath.Walk(config.Storage, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -535,13 +542,10 @@ func verifyPassword(password, hashedPassword string) bool {
 		return false
 	}
 
-	var params []string
-	fmt.Sscanf(parts[3], "m=%d,t=%d,p=%d", &params)
-
 	salt, _ := hex.DecodeString(parts[4])
 	key, _ := hex.DecodeString(parts[5])
 
-	// Compute the Argon2 hash of the provided password with the same parameters and salt
+	// Compute the Argon2 hash of the provided password with hard-coded parameters
 	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
 
 	// Compare the computed hash with the stored key
